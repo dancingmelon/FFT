@@ -6,7 +6,7 @@ import plotly.graph_objs as go
 
 import numpy as np
 
-from lectures_code.section_01 import z
+from lectures_code.section_02 import z
 
 app = dash.Dash()
 app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
@@ -30,25 +30,17 @@ app.layout = html.Div([
                         'line': {'width': 0.5, 'color': 'white'}
                     },
                     name='complexe number'
-                ),
-
-                go.Scatter(
-                    x=np.array([7]),
-                    y=np.array([z.imag]),
-                    text='complexe number (7 + 3i)',
-                    mode='markers',
-                    marker={
-                        'size': 15,
-                        'color': 'blue',
-                        'line': {'width': 0.5, 'color': 'white'}
-                    },
-                    name='another complexe number'
                 )
             ],
 
             'layout': go.Layout(
-                xaxis={'title': 'Real axis'},
-                yaxis={'title': 'Imaginary axis'}
+                title='Complex numbers',
+                xaxis={'title': 'Real axis',
+                       'range': [-5, 5]},
+                yaxis={'title': 'Imaginary axis',
+                       'range': [-5, 5]},
+                width=700,
+                height=700
             )
         }
     )
