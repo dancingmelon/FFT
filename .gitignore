@@ -1,0 +1,4 @@
+venv/*
+jupyter_notebook/*
+.idea/*
+*.pyc
