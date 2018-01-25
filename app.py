@@ -247,6 +247,8 @@ def update_graph_ampl(ampl, freq, phas):
             title='Complex Wave',
             titlefont={"size": 16},
             scene=dict(
+                bgcolor='rgb(240, 240, 240)',
+                aspectmode='cube',
                 xaxis={'title': 'time [s]',
                        'range': [np.min(time), np.max(time)]},
                 yaxis={'title': 'Real Axis',
