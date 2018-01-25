@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 # -----section 02_06: complex numbers-----
 
@@ -52,3 +53,37 @@ phs = np.angle(compnum)
 
 plt.polar([phs, phs], [0, mag])
 
+# -----section 02_08: sine waves and complex sine waves-----
+# a*sin(2*pi*f*t + theta) with 3 orthogonal parameters: a, f, theta
+
+srate = 500
+time = np.arange(0., 2., 1./srate)
+
+freq = 1
+ampl = 2
+phas = np.pi / 3
+
+sinwave = ampl * np.sin(2 * np.pi * freq * time + phas)
+
+plt.plot(time, sinwave, 'k')
+plt.xlabel('Time (sec.)')
+plt.ylabel('Amplitude (a.u.)')
+plt.show()
+
+coswave = ampl * np.cos(2 * np.pi * freq * time + phas)
+
+plt.plot(time, coswave, 'r', label='cosine')
+
+complex_sinewave = ampl * np.exp(1j * (2 * np.pi * freq * time + phas))
+
+plt.plot(time, np.real(complex_sinewave), label='real')
+plt.plot(time, np.imag(complex_sinewave), label='imag')
+plt.xlabel('Time (sec.)'), plt.ylabel('Amplitude')
+plt.title('Complex sine wave projections')
+plt.legend()
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot(time,np.real(complex_sinewave),np.imag(complex_sinewave))
+ax.set_xlabel('Time (s)'), ax.set_ylabel('Real part'), ax.set_zlabel('Imag part')
+ax.set_title('Complex sine wave in all its 3D glory')
