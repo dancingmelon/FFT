@@ -9,61 +9,60 @@ import numpy as np
 app = dash.Dash()
 app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
 
-srate = 500
-time = np.arange(0., 2., 1. / srate)
-# freq = 3
-# ampl = 2
-# phas = np.pi / 3
-#
-# sinwave = ampl * np.sin(2 * np.pi * freq * time + phas)
-# coswave = ampl * np.cos(2 * np.pi * freq * time + phas)
+srate = 1000
+time = np.arange(-1., 1., 1. / srate)
+
+morlet_freq = 5
+morlet_exp = np.exp((-time ** 2) / .1)
+
+sine_phas = np.pi / 4
+sine_freq = np.arange(2., 10., .5)
+
+# Attn: this is a global variable used across different callbacks, suitable only for single user app!!!!
+morlet_wavelet = np.zeros(len(time))
+
+
+def calculate_morlet_wavelet(morlet_phas):
+    morlet_sine = np.sin(2 * np.pi * morlet_freq * time + morlet_phas)
+    morlet_signal = morlet_sine * morlet_exp
+
+    return morlet_signal
+
+
+def calculate_dot_product(morlet_signal):
+    dps = np.zeros(len(sine_freq))
+
+    for i in range(0, len(dps)):
+        sine_wave = np.sin(2 * np.pi * sine_freq[i] * time + sine_phas)
+        dps[i] = np.dot(morlet_signal, sine_wave) / len(time)
+
+    return dps
+
 
 app.layout = html.Div([
-    html.H1("Sine and Cosine Wave Visualization", style={'textAlign': 'center'}),
+
+    html.H2("Dot Products Between Morlet Wavelet and Sine Function", style={'textAlign': 'center'}),
+
+    html.Hr(),
 
     html.Div([
-        dcc.Graph(
-            id='graph-waves',
-            style={'display': 'inline-block'}
-        ),
 
         html.Div([
+            dcc.Graph(
+                id='graph-morlet-wave'
+            )
+        ], style={'margin': '0px auto'}),
 
-            html.Label(id='label-ampl', style={'marginTop': 120}),
+        html.Hr(),
+
+        html.Div([
+            html.Label(id='label-morlet-phas'),
             dcc.Slider(
-                id='slider-ampl',
+                id='slider-morlet-phas',
                 min=0,
-                max=10,
-                value=5,
+                max=np.pi * 2,
+                value=0,
                 step=0.1,
-                marks={
-                    i: '{}'.format(i) for i in range(11)
-                },
-                updatemode='drag'
-            ),
-            html.Hr(),
-
-            html.Label('Frequency', id='label-freq', style={'marginTop': 20}),
-            dcc.Slider(
-                id='slider-freq',
-                min=0,
-                max=10,
-                value=5,
-                step=0.1,
-                marks={
-                    i: '{}'.format(i) for i in range(11)
-                },
-                updatemode='drag'
-            ),
-            html.Hr(),
-
-            html.Label('Phase', id='label-phas', style={'marginTop': 20}),
-            dcc.Slider(
-                id='slider-phas',
-                min=0,
-                max=2 * np.pi,
-                value=np.pi / 3,
-                step=0.05,
                 marks={
                     0: '0',
                     np.pi / 2: '1/2 pi',
@@ -72,193 +71,98 @@ app.layout = html.Div([
                     np.pi * 2: '2 pi'
                 },
                 updatemode='drag'
-            ),
-            html.Hr()
+            )
+        ]),
 
-        ],
-            style={'display': 'inline-block', 'width': 400, 'verticalAlign': 'top', 'marginLeft': 50})
-    ]),
-
-    html.Hr(),
-
-    html.Div([
-
-        html.H1("Complex Sine Wave Visualization", style={'textAlign': 'center'}),
+        html.Hr(),
 
         html.Div([
+            dcc.Graph(
+                id='graph-dot-products'
+            )
+        ]),
 
-            dcc.Graph(id='3d-curve', style={'display': 'inline-block'}),
+        html.Hr(),
 
-            html.Div([
-                html.Div([
-                    html.Label(id='label-ampl-3d', style={'marginTop': 120}),
-                    dcc.Slider(
-                        id='slider-ampl-3d',
-                        min=0,
-                        max=10,
-                        value=5,
-                        step=0.1,
-                        marks={
-                            i: '{}'.format(i) for i in range(11)
-                        },
-                        updatemode='drag'
-                    ),
-                    html.Hr(),
+        html.Div(id='signal', style={'display': 'none'})
 
-                    html.Label(id='label-freq-3d', style={'marginTop': 20}),
-                    dcc.Slider(
-                        id='slider-freq-3d',
-                        min=0,
-                        max=10,
-                        value=5,
-                        step=0.1,
-                        marks={
-                            i: '{}'.format(i) for i in range(11)
-                        },
-                        updatemode='drag'
-                    ),
-                    html.Hr(),
-
-                    html.Label(id='label-phas-3d', style={'marginTop': 20}),
-                    dcc.Slider(
-                        id='slider-phas-3d',
-                        min=0,
-                        max=2 * np.pi,
-                        value=np.pi / 3,
-                        step=0.05,
-                        marks={
-                            0: '0',
-                            np.pi / 2: '1/2 pi',
-                            np.pi: 'pi',
-                            np.pi * 3 / 2: '3/2 pi',
-                            np.pi * 2: '2 pi'
-                        },
-                        updatemode='drag'
-                    ),
-                    html.Hr()
-                ])
-            ], style={'display': 'inline-block', 'width': 400, 'verticalAlign': 'top', 'marginLeft': 50})
-        ])
     ])
-], style={'width': 1200, 'margin': '30px auto'}, id='frame-box')
+], style={'width': 1000, 'margin': '30px auto'})
 
 
 @app.callback(
-    Output('label-ampl', 'children'),
-    [Input('slider-ampl', 'value')])
-def update_label_ampl(value):
-    return "Amplitude = {}".format(value)
+    Output('label-morlet-phas', 'children'),
+    [Input('slider-morlet-phas', 'value')])
+def update_label_sine_phas(morlet_phas):
+    return "Morlet Wave Phase = {}".format(morlet_phas)
 
 
 @app.callback(
-    Output('label-ampl-3d', 'children'),
-    [Input('slider-ampl-3d', 'value')])
-def update_label_ampl(value):
-    return "3D Amplitude = {}".format(value)
+    Output('signal', 'children'),
+    [Input('slider-morlet-phas', 'value')])
+def send_signal(morlet_phas):
+    # change global variable for use across different callbacks
+    # use a non-displayed div as signal
+    global morlet_wavelet
+    morlet_wavelet = calculate_morlet_wavelet(morlet_phas)
+    return "signal sent"
 
 
 @app.callback(
-    Output('label-freq', 'children'),
-    [Input('slider-freq', 'value')])
-def update_label_freq(value):
-    return "Frequency = {}".format(value)
-
-
-@app.callback(
-    Output('label-freq-3d', 'children'),
-    [Input('slider-freq-3d', 'value')])
-def update_label_freq_3d(value):
-    return "3D Frequency = {}".format(value)
-
-
-@app.callback(
-    Output('label-phas', 'children'),
-    [Input('slider-phas', 'value')])
-def update_label_phas(value):
-    return "Phase = {}".format(value)
-
-
-@app.callback(
-    Output('label-phas-3d', 'children'),
-    [Input('slider-phas-3d', 'value')])
-def update_label_phas(value):
-    return "3D Phase = {}".format(value)
-
-
-@app.callback(
-    Output('graph-waves', 'figure'),
-    [Input('slider-ampl', 'value'),
-     Input('slider-freq', 'value'),
-     Input('slider-phas', 'value')]
+    Output('graph-morlet-wave', 'figure'),
+    [Input('signal', 'children')]
 )
-def update_graph_ampl(ampl, freq, phas):
-    sinwave = ampl * np.sin(2 * np.pi * freq * time + phas)
-    coswave = ampl * np.cos(2 * np.pi * freq * time + phas)
-
+def update_graph_morlet_wave(value):
     return {
         'data': [
             go.Scatter(
                 x=time,
-                y=sinwave,
+                y=morlet_wavelet,
                 mode='lines',
-                name='sine wave'
-            ),
-            go.Scatter(
-                x=time,
-                y=coswave,
-                mode='lines',
-                name='cos wave'
+                name='morlet wavelet'
             )
         ],
 
         'layout': go.Layout(
-            title='Sine and Cosine Waves',
-            titlefont={"size": 16},
+            title='Morlet Wavelet',
+            titlefont={"size": 24},
             xaxis={'title': 'time [s]',
-                   'range': [np.min(time), np.max(time)]},
-            yaxis={'title': 'amplitude [a.u.]',
-                   'range': [-11, 11]},
-            width=700,
-            height=700
+                   'range': [np.min(time) - 0.1, np.max(time) + 0.1]},
+            yaxis={'title': '[a.u.]',
+                   'range': [-1.1, 1.1]},
+            height=300
         )
     }
 
 
 @app.callback(
-    Output('3d-curve', 'figure'),
-    [Input('slider-ampl-3d', 'value'),
-     Input('slider-freq-3d', 'value'),
-     Input('slider-phas-3d', 'value')]
+    Output('graph-dot-products', 'figure'),
+    [Input('signal', 'children')]
 )
-def update_graph_ampl(ampl, freq, phas):
-    complex_wave = ampl * np.exp(1j * (2 * np.pi * freq * time + phas))
+def update_graph_dot_products(value):
+    dps = calculate_dot_product(morlet_wavelet)
 
     return {
         'data': [
-            go.Scatter3d(
-                x=time,
-                y=np.real(complex_wave),
-                z=np.imag(complex_wave),
-                mode='lines',
-                name='Complex Wave'
-            )],
+            go.Scatter(
+                x=sine_freq,
+                y=dps,
+                mode='markers',
+                marker={
+                    'size': 20
+                },
+                name='dot products'
+            )
+        ],
 
         'layout': go.Layout(
-            title='Complex Wave',
-            titlefont={"size": 16},
-            scene=dict(
-                bgcolor='rgb(240, 240, 240)',
-                aspectmode='cube',
-                xaxis={'title': 'time [s]',
-                       'range': [np.min(time), np.max(time)]},
-                yaxis={'title': 'Real Axis',
-                       'range': [-11, 11]},
-                zaxis={'title': 'Imaginary Axis',
-                       'range': [-11, 11]},
-
-            ),
-            width=700,
-            height=700
+            title='Dot Products',
+            titlefont={"size": 24},
+            xaxis={'title': 'Sine Wave Frequency [Hz]',
+                   'range': [np.min(sine_freq) - 0.1, np.max(sine_freq) + 0.1]},
+            yaxis={'title': '[a.u.]',
+                   'range': [-0.2, 0.2]},
+            height=300
         )
     }
 

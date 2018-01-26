@@ -87,3 +87,34 @@ ax = fig.add_subplot(111, projection='3d')
 ax.plot(time,np.real(complex_sinewave),np.imag(complex_sinewave))
 ax.set_xlabel('Time (s)'), ax.set_ylabel('Real part'), ax.set_zlabel('Imag part')
 ax.set_title('Complex sine wave in all its 3D glory')
+
+
+# -----section 02_09: dot product-----
+v1 = [1, 2, 3]
+v2 = [3, 2, 1]
+
+dp = sum(np.multiply(v1, v2))
+dp2 = np.dot(v1, v2)
+
+srate = 500
+time = np.arange(0., 2., 1./srate)
+
+freq1 = 5;    # frequency in Hz
+freq2 = 5;    # frequency in Hz
+
+ampl1 = 2;    # amplitude in a.u.
+ampl2 = 2;    # amplitude in a.u.
+
+phas1 = np.pi/2; # phase in radians
+phas2 = np.pi/2; # phase in radians
+
+sinewave1 = ampl1 * np.sin( 2*np.pi * freq1 * time + phas1 );
+sinewave2 = ampl2 * np.sin( 2*np.pi * freq2 * time + phas2 );
+
+# compute dot product
+dp = np.dot(sinewave1,sinewave2);
+
+# print result
+print('dp =',dp)
+
+
