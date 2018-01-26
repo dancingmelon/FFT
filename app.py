@@ -19,7 +19,7 @@ time = np.arange(0., 2., 1. / srate)
 # coswave = ampl * np.cos(2 * np.pi * freq * time + phas)
 
 app.layout = html.Div([
-    html.H1("Sine and Cosine Wave Visualization"),
+    html.H1("Sine and Cosine Wave Visualization", style={'textAlign': 'center'}),
 
     html.Div([
         dcc.Graph(
@@ -83,7 +83,7 @@ app.layout = html.Div([
 
     html.Div([
 
-        html.H1("Complex Sine Wave Visualization"),
+        html.H1("Complex Sine Wave Visualization", style={'textAlign': 'center'}),
 
         html.Div([
 
@@ -140,7 +140,7 @@ app.layout = html.Div([
             ], style={'display': 'inline-block', 'width': 400, 'verticalAlign': 'top', 'marginLeft': 50})
         ])
     ])
-])
+], style={'width': 1200, 'margin': '30px auto'}, id='frame-box')
 
 
 @app.callback(
