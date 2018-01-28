@@ -118,3 +118,37 @@ dp = np.dot(sinewave1,sinewave2);
 print('dp =',dp)
 
 
+# -----section 02_10: complex dot product-----
+
+theta = 0 * np.pi / 4
+srate = 1000
+time = np.arange(-1., 1., 1./srate)
+
+sinew = np.sin(2 * np.pi * 5 * time + theta)
+gauss = np.exp((-time**2) / .1)
+signal = sinew * gauss
+
+sinefrex = np.arange(2., 10., .5)
+plt.plot(time, signal)
+
+dps = np.zeros(len(sinefrex))
+
+for fi in range(0, len(dps)):
+    sinew = np.exp(1j * 2 * np.pi * sinefrex[fi] * time)
+    dps[fi] = np.abs(np.dot(sinew, signal) / len(time))
+
+plt.stem(sinefrex, dps)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

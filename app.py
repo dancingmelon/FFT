@@ -15,11 +15,10 @@ time = np.arange(-1., 1., 1. / srate)
 morlet_freq = 5
 morlet_exp = np.exp((-time ** 2) / .1)
 
-sine_phas = np.pi / 4
-sine_freq = np.arange(2., 10., .5)
+real_wave = np.cos(2 * np.pi * morlet_freq * time)
+complex_wave = np.exp(1j * 2 * np.pi * morlet_freq * time)
 
-# Attn: this is a global variable used across different callbacks, suitable only for single user app!!!!
-morlet_wavelet = np.zeros(len(time))
+morlet_wave = None
 
 
 def calculate_morlet_wavelet(morlet_phas):
@@ -29,21 +28,17 @@ def calculate_morlet_wavelet(morlet_phas):
     return morlet_signal
 
 
-def calculate_dot_product(morlet_signal):
-    dps = np.zeros(len(sine_freq))
-
-    for i in range(0, len(dps)):
-        sine_wave = np.sin(2 * np.pi * sine_freq[i] * time + sine_phas)
-        dps[i] = np.dot(morlet_signal, sine_wave) / len(time)
-
-    return dps
-
-
 app.layout = html.Div([
 
-    html.H2("Dot Products Between Morlet Wavelet and Sine Function", style={'textAlign': 'center'}),
+    html.H2("Real vs. Complex Dot Products", style={'textAlign': 'center'}),
 
     html.Hr(),
+
+    dcc.Interval(
+        id='interval-component',
+        interval=0.05 * 1000,  # in milliseconds
+        n_intervals=0
+    ),
 
     html.Div([
 
@@ -51,50 +46,76 @@ app.layout = html.Div([
             dcc.Graph(
                 id='graph-morlet-wave'
             )
-        ], style={'margin': '0px auto'}),
+        ]),
 
         html.Hr(),
 
         html.Div([
+            html.Label(id='label-interval'),
             html.Label(id='label-morlet-phas'),
             dcc.Slider(
                 id='slider-morlet-phas',
                 min=0,
-                max=np.pi * 2,
+                max=np.pi * 4,
                 value=0,
-                step=0.1,
+                step=0.05,
                 marks={
                     0: '0',
                     np.pi / 2: '1/2 pi',
                     np.pi: 'pi',
                     np.pi * 3 / 2: '3/2 pi',
-                    np.pi * 2: '2 pi'
+                    np.pi * 2: '2 pi',
+                    np.pi * 5 / 2: '5/2 pi',
+                    np.pi * 3: '3 pi',
+                    np.pi * 7 / 2: '7/2 pi',
+                    np.pi * 4: '4 pi'
                 },
                 updatemode='drag'
             )
-        ]),
-
-        html.Hr(),
+        ], style={'marginBottom': 30}),
 
         html.Div([
-            dcc.Graph(
-                id='graph-dot-products'
-            )
-        ]),
+            html.Div([
+                dcc.Graph(id='graph-real-dot-product')
+            ], style={'display': 'inline-block', 'width': 500}),
+            html.Div([
+                dcc.Graph(id='graph-complex-dot-product')
+            ], style={'display': 'inline-block', 'width': 500})
+        ])
 
-        html.Hr(),
+    ]),
 
-        html.Div(id='signal', style={'display': 'none'})
+    html.Div(id='signal', style={'display': 'none'}),
 
-    ])
 ], style={'width': 1000, 'margin': '30px auto'})
+
+
+@app.callback(
+    Output('label-interval', 'children'),
+    [Input('interval-component', 'n_intervals')])
+def update_slider_morlet_phas(n_intervals):
+    return "n_intervals = {}".format(n_intervals)
+
+
+@app.callback(
+    Output('slider-morlet-phas', 'value'),
+    [Input('interval-component', 'n_intervals')])
+def update_slider_morlet_phas(n_intervals):
+    proxy_value = n_intervals % len(np.arange(0., np.pi * 4, 0.05))
+    value = 0 + proxy_value * 0.05
+    return value
+
+    # min = 0,
+    # max = np.pi * 4,
+    # value = 0,
+    # step = 0.05,
 
 
 @app.callback(
     Output('label-morlet-phas', 'children'),
     [Input('slider-morlet-phas', 'value')])
-def update_label_sine_phas(morlet_phas):
-    return "Morlet Wave Phase = {}".format(morlet_phas)
+def update_label_morlet_phas(morlet_phas):
+    return "Morlet Wave Phase = {} pi".format(round(morlet_phas / np.pi, 1))
 
 
 @app.callback(
@@ -120,6 +141,20 @@ def update_graph_morlet_wave(value):
                 y=morlet_wavelet,
                 mode='lines',
                 name='morlet wavelet'
+            ),
+
+            go.Scatter(
+                x=time,
+                y=complex_wave.real,
+                mode='lines',
+                name='real part'
+            ),
+
+            go.Scatter(
+                x=time,
+                y=complex_wave.imag,
+                mode='lines',
+                name='imaginary part'
             )
         ],
 
@@ -130,39 +165,93 @@ def update_graph_morlet_wave(value):
                    'range': [np.min(time) - 0.1, np.max(time) + 0.1]},
             yaxis={'title': '[a.u.]',
                    'range': [-1.1, 1.1]},
-            height=300
+            height=400
         )
     }
 
 
 @app.callback(
-    Output('graph-dot-products', 'figure'),
+    Output('graph-real-dot-product', 'figure'),
     [Input('signal', 'children')]
 )
-def update_graph_dot_products(value):
-    dps = calculate_dot_product(morlet_wavelet)
+def update_graph_real_dot_product(value):
+    dp_real = np.dot(morlet_wavelet, real_wave) / len(time)
 
     return {
         'data': [
             go.Scatter(
-                x=sine_freq,
-                y=dps,
+                x=[dp_real],
+                y=[0],
                 mode='markers',
                 marker={
-                    'size': 20
+                    'size': 20,
+                    'color': 'red'
                 },
-                name='dot products'
+                name='real dot products'
+            ),
+            go.Scatter(
+                x=[0, dp_real],
+                y=[0, 0],
+                mode='lines',
+                line={
+                    'color': 'red'
+                }
             )
         ],
 
         'layout': go.Layout(
-            title='Dot Products',
-            titlefont={"size": 24},
-            xaxis={'title': 'Sine Wave Frequency [Hz]',
-                   'range': [np.min(sine_freq) - 0.1, np.max(sine_freq) + 0.1]},
+            title='Real Dot Products',
+            titlefont={"size": 18},
+            xaxis={'title': 'Real',
+                   'range': [-0.2, 0.2]},
             yaxis={'title': '[a.u.]',
                    'range': [-0.2, 0.2]},
-            height=300
+            showlegend=False,
+            width=500,
+            height=500
+        )
+    }
+
+
+@app.callback(
+    Output('graph-complex-dot-product', 'figure'),
+    [Input('signal', 'children')]
+)
+def update_graph_complex_dot_product(value):
+    dp_complex = np.dot(morlet_wavelet, complex_wave) / len(time)
+
+    return {
+        'data': [
+            go.Scatter(
+                x=[dp_complex.real],
+                y=[dp_complex.imag],
+                mode='markers',
+                marker={
+                    'size': 20,
+                    'color': 'red'
+                },
+                name='complex dot products'
+            ),
+            go.Scatter(
+                x=[0, dp_complex.real],
+                y=[0, dp_complex.imag],
+                mode='lines',
+                line={
+                    'color': 'red'
+                }
+            )
+        ],
+
+        'layout': go.Layout(
+            title='Complex Dot Products',
+            titlefont={"size": 18},
+            xaxis={'title': 'Real',
+                   'range': [-0.2, 0.2]},
+            yaxis={'title': '[a.u.]',
+                   'range': [-0.2, 0.2]},
+            showlegend=False,
+            width=500,
+            height=500
         )
     }
 
